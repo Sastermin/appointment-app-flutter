@@ -83,13 +83,17 @@ class _LoginPageState extends State<LoginPage> {
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     try {
-                      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+                      UserCredential userCredential =
+                          await _auth.signInWithEmailAndPassword(
                         email: emailController.text.trim(),
                         password: passwordController.text.trim(),
                       );
 
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Bienvenido ${userCredential.user?.email ?? ''}")),
+                        SnackBar(
+                          content: Text(
+                              "Bienvenido ${userCredential.user?.email ?? ''}"),
+                        ),
                       );
                     } on FirebaseAuthException catch (e) {
                       String message = "";
@@ -98,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
                       } else if (e.code == 'wrong-password') {
                         message = "Contraseña incorrecta";
                       } else {
-                        message = e.message !;
+                        message = e.message!;
                       }
 
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -109,7 +113,28 @@ class _LoginPageState extends State<LoginPage> {
                 },
                 child: const Text('Iniciar sesión'),
               ),
-                const SizedBox(height: 16),
+
+              const SizedBox(height: 16),
+
+              //Botón Olvidó su contraseña
+              TextButton(
+                onPressed: () {
+                },
+                child: const Text("¿Olvidó su contraseña?"),
+              ),
+
+              const SizedBox(height: 8),
+
+              //Botón Crear una cuenta nueva
+              TextButton(
+                onPressed: () {
+                },
+                child: const Text("Crear una cuenta nueva"),
+              ),
+
+              const SizedBox(height: 16),
+
+              //Botón de cerrar sesión
               ElevatedButton(
                 onPressed: () async {
                   await _auth.signOut();
@@ -118,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                   );
                 },
                 child: const Text("Cerrar sesión"),
-              )
+              ),
             ],
           ),
         ),

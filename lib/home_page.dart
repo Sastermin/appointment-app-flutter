@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'routes.dart'; // Importa el archivo donde defines tus rutas de navegación
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,6 +12,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String? userName;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {
@@ -19,7 +21,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadUserData() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _auth.currentUser;
     if (user != null) {
       final doc = await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).get();
       if (doc.exists && mounted) {
@@ -33,13 +35,17 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Menú Principal"),
+        automaticallyImplyLeading: false, // Evita mostrar la flecha de "volver"
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Mensaje de Bienvenida ---
+              // --- Saludo Personalizado ---
               Text(
                 '¡Hola, ${userName ?? 'Usuario'}!',
                 style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
@@ -50,14 +56,28 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 24),
 
-              //Widgets de Acción
-              Row(
-                children: [
-                  Expanded(child: _buildActionCard(context, Icons.calendar_today, 'Agendar una Cita')),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildActionCard(context, Icons.lightbulb_outline, 'Consejos médicos')),
-                ],
+              // --- Botones principales ---
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'DoctorAppointmentApp de prueba',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // --- Botón para ir a la pantalla de citas ---
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, Routes.citas);
+                      },
+                      child: const Text('Gestionar Citas'),
+                    ),
+                  ],
+                ),
               ),
+
               const SizedBox(height: 32),
 
               // --- Sección de Especialistas ---
@@ -75,8 +95,9 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
+
               const SizedBox(height: 32),
-              
+
               // --- Sección de Doctores Populares ---
               _buildSectionTitle('Popular Doctors'),
               _buildDoctorCard('Dr. Juan Pérez', 'Cardiólogo', 'assets/doctor1.jpg'),
@@ -89,26 +110,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Widgets Reutilizables
-  Widget _buildActionCard(BuildContext context, IconData icon, String label) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () {},
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Icon(icon, size: 40, color: Theme.of(context).primaryColor),
-              const SizedBox(height: 8),
-              Text(label, textAlign: TextAlign.center),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  // --- Widgets Reutilizables ---
 
   Widget _buildSectionTitle(String title) {
     return Padding(
@@ -119,16 +121,14 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-  
+
   Widget _buildSpecialistCard(String specialty, String imagePath) {
-    // NOTA: Debes agregar las imágenes a una carpeta `assets` en tu proyecto.
     return SizedBox(
       width: 100,
       child: Card(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Image.asset(imagePath, height: 50), // Descomenta cuando agregues las imágenes
             const Icon(Icons.local_hospital, size: 40, color: Colors.blue), // Placeholder
             const SizedBox(height: 8),
             Text(specialty, textAlign: TextAlign.center),
@@ -142,7 +142,6 @@ class _HomePageState extends State<HomePage> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
-        // leading: CircleAvatar(backgroundImage: AssetImage(imagePath)), // Descomenta con imágenes
         leading: const CircleAvatar(child: Icon(Icons.person)), // Placeholder
         title: Text(name),
         subtitle: Text(specialty),

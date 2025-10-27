@@ -14,24 +14,18 @@ class _ProfilePageState extends State<ProfilePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Controladores de los campos del formulario
   final TextEditingController nombreController = TextEditingController();
   final TextEditingController telefonoController = TextEditingController();
   final TextEditingController enfermedadesController = TextEditingController();
 
   bool _loading = false;
-  // _loading es un interruptor visual:
-  // /true -> muestra un "Cargando..." y bloquea la UI.
-  // /false -> muestra la pantalla normal.
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
   }
-  // Aquí creamos la clase que cargará los datos del usuario al iniciar.
 
-  // Cargar datos del usuario desde Firestore
   Future<void> _loadUserData() async {
     final user = _auth.currentUser;
     if (user == null) return;
@@ -41,11 +35,10 @@ class _ProfilePageState extends State<ProfilePage> {
       final data = doc.data()!;
       nombreController.text = data['nombre'] ?? '';
       telefonoController.text = data['telefono'] ?? '';
-      enfermedadesController.text = data['enfermedades'] ?? ''; // NUEVO (antes historial medico)
+      enfermedadesController.text = data['enfermedades'] ?? '';
     }
   }
 
-  // Guardar datos del usuario en Firestore
   Future<void> _saveUserData() async {
     final user = _auth.currentUser;
     if (user == null) return;
@@ -55,7 +48,7 @@ class _ProfilePageState extends State<ProfilePage> {
     await _firestore.collection('usuarios').doc(user.uid).set({
       'nombre': nombreController.text.trim(),
       'telefono': telefonoController.text.trim(),
-      'enfermedades': enfermedadesController.text.trim(), // NUEVO (antes historial medico)
+      'enfermedades': enfermedadesController.text.trim(),
       'email': user.email,
       'uid': user.uid,
     });
@@ -72,73 +65,174 @@ class _ProfilePageState extends State<ProfilePage> {
     final user = _auth.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Perfil")),
+      //AppBar verde con texto blanco y título centrado
+      appBar: AppBar(
+        title: const Text("Perfil"),
+        backgroundColor: const Color(0xFF4CAF50),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+
+      //Fondo blanco
+      backgroundColor: Colors.white,
+
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(16.0),
               child: SingleChildScrollView(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      "Correo: ${user?.email ?? 'No disponible'}",
-                      style: const TextStyle(fontSize: 16),
+                    //Encabezado con correo del usuario en contenedor verde muy claro
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        "Correo: ${user?.email ?? 'No disponible'}",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2E7D32),
+                        ),
+                      ),
                     ),
-                    // Text
                     const SizedBox(height: 20),
 
-                    // FORMULARIO
+                    // Campo de texto Nombre
                     TextField(
                       controller: nombreController,
-                      decoration: const InputDecoration(labelText: "Nombre completo"),
-                    ), // TextField
+                      decoration: InputDecoration(
+                        labelText: "Nombre completo",
+                        labelStyle: const TextStyle(color: Color(0xFF4CAF50)),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Color(0xFF81C784)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Color(0xFF388E3C)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 10),
 
+                    //Campo de texto Teléfono
                     TextField(
                       controller: telefonoController,
-                      decoration: const InputDecoration(labelText: "Teléfono"),
                       keyboardType: TextInputType.phone,
-                    ), // TextField
+                      decoration: InputDecoration(
+                        labelText: "Teléfono",
+                        labelStyle: const TextStyle(color: Color(0xFF4CAF50)),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Color(0xFF81C784)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Color(0xFF388E3C)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 10),
 
+                    //Campo de texto Enfermedades
                     TextField(
-                      controller: enfermedadesController, // NUEVO (antes historialController)
-                      decoration: const InputDecoration(labelText: "Enfermedades"), // NUEVO
+                      controller: enfermedadesController,
                       maxLines: 3,
-                    ), // TextField
+                      decoration: InputDecoration(
+                        labelText: "Enfermedades",
+                        labelStyle: const TextStyle(color: Color(0xFF4CAF50)),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Color(0xFF81C784)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Color(0xFF388E3C)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
 
-                    ElevatedButton(
-                      onPressed: _saveUserData,
-                      child: const Text("Guardar información"),
-                    ), // ElevatedButton
-                    const SizedBox(height: 30),
-
-                    // Botón para volver al menú principal
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text("Volver al Menú Principal"),
-                    ), // ElevatedButton
-
+                    //Botón guardar datos verde con texto blanco y bordes redondeados
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _saveUserData,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4CAF50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          "Guardar información",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
 
-                    // Botón para cerrar sesión
-                    ElevatedButton(
-                      onPressed: () async {
-                        await _auth.signOut();
-                        // Comprobamos que el widget sigue "montado" antes de usar el BuildContext
-                        if (!mounted) return;
-                        Navigator.pushReplacementNamed(context, Routes.login);
-                      },
-                      child: const Text("Cerrar sesión"),
-                    ), // ElevatedButton
+                    // Botón volver al menú principal
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE8F5E9),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(color: Color(0xFF4CAF50)),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          "Volver al Menú Principal",
+                          style: TextStyle(fontSize: 16, color: Color(0xFF2E7D32)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    //Botón cerrar sesión rojo suave con texto blanco
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await _auth.signOut();
+                          if (!mounted) return;
+                          Navigator.pushReplacementNamed(context, Routes.login);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD32F2F),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          "Cerrar sesión",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
-                ), // Column
-              ), // SingleChildScrollView
-            ), // Padding
-    ); // Scaffold
+                ),
+              ),
+            ),
+    );
   }
 }

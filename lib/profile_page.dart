@@ -76,7 +76,7 @@ class _ProfilePageState extends State<ProfilePage> {
       //Fondo blanco
       backgroundColor: Colors.white,
 
-      body: _loading
+      body: _loading //Cargar indicador si está en proceso
           ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(16.0),
@@ -206,7 +206,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 20),
 
-                    //Botón cerrar sesión rojo suave con texto blanco
+                    //Botón cerrar sesión rojo con texto blanco
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(

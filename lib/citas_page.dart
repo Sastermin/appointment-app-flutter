@@ -41,12 +41,10 @@ class _CitasPageState extends State<CitasPage> {
       initialDate: fechaSeleccionada ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2030),
-
-      //Personalización del selector de fecha con verde claro
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: const ColorScheme.light(
-            primary: Color(0xFF4CAF50), // Verde principal
+            primary: Color(0xFF4CAF50),
           ),
         ),
         child: child!,
@@ -57,8 +55,6 @@ class _CitasPageState extends State<CitasPage> {
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(fechaSeleccionada ?? DateTime.now()),
-
-        //Tema verde para el selector de hora
         builder: (context, child) => Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
@@ -100,10 +96,12 @@ class _CitasPageState extends State<CitasPage> {
 
     if (citaEnEdicion == null) {
       await firestore.collection('citas').add(data);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cita creada')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Cita creada')));
     } else {
       await firestore.collection('citas').doc(citaEnEdicion).update(data);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cita actualizada')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Cita actualizada')));
     }
 
     motivoController.clear();
@@ -115,40 +113,60 @@ class _CitasPageState extends State<CitasPage> {
 
   Future<void> eliminarCita(String id) async {
     await firestore.collection('citas').doc(id).delete();
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cita eliminada')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Cita eliminada')));
   }
 
   void editarCita(String id, Map<String, dynamic> data) {
     setState(() {
       citaEnEdicion = id;
       motivoController.text = data['motivo'] ?? '';
-      fechaSeleccionada = (data['fechaHora'] as Timestamp?)?.toDate() ?? DateTime.now();
+      fechaSeleccionada =
+          (data['fechaHora'] as Timestamp?)?.toDate() ?? DateTime.now();
     });
+  }
+
+  // MÉTODO DE REFRESH: se activa al hacer pull-to-refresh
+  Future<void> _refrescarCitas() async {
+    setState(() {}); // fuerza recarga del StreamBuilder
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    // SNACKBAR DE CONFIRMACIÓN VISUAL
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: const [
+              Icon(Icons.refresh, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Lista de citas actualizada correctamente'),
+            ],
+          ),
+          backgroundColor: const Color(0xFF4CAF50),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      //AppBar verde con texto blanco
       appBar: AppBar(
         title: const Text('Citas'),
         backgroundColor: const Color(0xFF4CAF50),
         foregroundColor: Colors.white,
         centerTitle: true,
       ),
-
-      // 🌿 NUEVO: Fondo blanco con borde redondeado
       backgroundColor: Colors.white,
-
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            //Encabezado estilizado con nombre del usuario
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9), // Verde muy claro
+                color: const Color(0xFFE8F5E9),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -165,7 +183,6 @@ class _CitasPageState extends State<CitasPage> {
 
             const SizedBox(height: 20),
 
-            //Campo de texto con borde verde y fondo blanco
             TextField(
               controller: motivoController,
               decoration: InputDecoration(
@@ -186,7 +203,6 @@ class _CitasPageState extends State<CitasPage> {
 
             const SizedBox(height: 12),
 
-            // Selector de fecha estilizado
             Row(
               children: [
                 Expanded(
@@ -206,7 +222,6 @@ class _CitasPageState extends State<CitasPage> {
 
             const SizedBox(height: 12),
 
-            // Botón verde con texto blanco
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -227,68 +242,82 @@ class _CitasPageState extends State<CitasPage> {
 
             const SizedBox(height: 20),
 
-            //Lista con diseño limpio
+            // REFRESH INDICATOR: arrastra hacia abajo para actualizar
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: firestore
-                    .collection('citas')
-                    .orderBy('fechaHora', descending: false)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+              child: RefreshIndicator(
+                onRefresh: _refrescarCitas,
+                color: const Color(0xFF4CAF50),
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: firestore
+                      .collection('citas')
+                      .orderBy('fechaHora', descending: false)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                  final citas = snapshot.data!.docs;
+                    final citas = snapshot.data!.docs;
 
-                  if (citas.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No hay citas programadas 🗓️',
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    itemCount: citas.length,
-                    itemBuilder: (context, index) {
-                      final cita = citas[index];
-                      final data = cita.data() as Map<String, dynamic>;
-                      final fecha = (data['fechaHora'] as Timestamp?)?.toDate();
-
-                      return Card(
-                        color: const Color(0xFFF1F8E9), // Fondo verde pálido
-                        margin: const EdgeInsets.symmetric(vertical: 6),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          title: Text(
-                            "${data['motivo'] ?? 'Sin motivo'}",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(
-                            '👤 ${data['nombreUsuario'] ?? 'Desconocido'}\n📅 ${fecha ?? 'Sin fecha'}',
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, color: Color(0xFF388E3C)),
-                                onPressed: () => editarCita(cita.id, data),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => eliminarCita(cita.id),
-                              ),
-                            ],
-                          ),
+                    if (citas.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No hay citas programadas 🗓️',
+                          style: TextStyle(color: Colors.grey, fontSize: 16),
                         ),
                       );
-                    },
-                  );
-                },
+                    }
+
+                    return ListView.builder(
+                      itemCount: citas.length,
+                      itemBuilder: (context, index) {
+                        final cita = citas[index];
+                        final data = cita.data() as Map<String, dynamic>;
+                        final fecha = (data['fechaHora'] as Timestamp?)?.toDate();
+
+                        //DISMISSIBLE: permite eliminar deslizando
+                        return Dismissible(
+                          key: Key(cita.id),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            color: Colors.red,
+                            alignment: Alignment.centerRight,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            child:
+                                const Icon(Icons.delete, color: Colors.white),
+                          ),
+                          onDismissed: (_) => eliminarCita(cita.id),
+
+                          // GESTURE DETECTOR: permite editar tocando
+                          child: GestureDetector(
+                            onTap: () => editarCita(cita.id, data),
+                            child: Card(
+                              color: const Color(0xFFF1F8E9),
+                              margin:
+                                  const EdgeInsets.symmetric(vertical: 6),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ListTile(
+                                title: Text(
+                                  "${data['motivo'] ?? 'Sin motivo'}",
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Text(
+                                  '👤 ${data['nombreUsuario'] ?? 'Desconocido'}\n📅 ${fecha ?? 'Sin fecha'}',
+                                ),
+                                trailing: const Icon(Icons.edit,
+                                    color: Color(0xFF388E3C)),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           ],

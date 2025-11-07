@@ -46,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 🔹 CAMBIO: Logo o ícono representativo
+              // Logo o ícono representativo
               const Icon(
                 Icons.local_hospital_rounded,
                 size: 90,
@@ -54,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 20),
 
-              // 🔹 CAMBIO: Texto de bienvenida
+              // Texto de bienvenida
               const Text(
                 "Bienvenido de nuevo",
                 textAlign: TextAlign.center,
@@ -78,7 +78,7 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: InputDecoration(
                   labelText: "Correo Electrónico",
                   prefixIcon: const Icon(Icons.email_outlined, color: verdeOscuro),
-                  filled: true, // 🔹 CAMBIO: color de fondo en el campo
+                  filled: true, //color de fondo en el campo
                   fillColor: verdeClaro.withOpacity(0.2),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), // bordes redondeados
@@ -197,26 +197,6 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 10),
 
-              //Botón de cerrar sesión más discreto
-              OutlinedButton(
-                onPressed: () async {
-                  await _auth.signOut();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Sesión cerrada")),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: verdeOscuro, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: const Text(
-                  "Cerrar sesión",
-                  style: TextStyle(color: verdeOscuro, fontWeight: FontWeight.bold),
-                ),
-              ),
             ],
           ),
         ),

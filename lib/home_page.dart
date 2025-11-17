@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'routes.dart'; // Importa el archivo donde defines tus rutas de navegación
+import 'routes.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,23 +12,25 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String? userName;
+  String? rol; // 👉 Guardará "Paciente" o "Médico"
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
-  Color? get blanco => null;
 
   @override
-  void initState() { // Inicializa el estado y carga los datos del usuario
+  void initState() {
     super.initState();
     _loadUserData();
   }
 
-  Future<void> _loadUserData() async { // Carga el nombre del usuario desde Firestore
+  Future<void> _loadUserData() async {
     final user = _auth.currentUser;
+
     if (user != null) {
-      final doc = await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).get(); // Asegúrate de que la colección y el campo coincidan con la base de datos
-      if (doc.exists && mounted) { 
+      final doc = await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).get();
+
+      if (doc.exists && mounted) {
         setState(() {
           userName = doc.data()!['nombre'];
+          rol = doc.data()!['rol'] ?? "Paciente"; // 👈 Nuevo
         });
       }
     }
@@ -36,13 +38,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Colores de tema consistentes con la app
     const Color verdeClaro = Color(0xFF9FE2BF);
     const Color verdeOscuro = Color(0xFF3E8E41);
     const Color blanco = Colors.white;
 
     return Scaffold(
-      backgroundColor: blanco, //Fondo limpio y brillante
+      backgroundColor: blanco,
       appBar: AppBar(
         title: const Text(
           "Menú Principal",
@@ -51,37 +52,35 @@ class _HomePageState extends State<HomePage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        automaticallyImplyLeading: false, // Elimina el botón de retroceso
-        backgroundColor: verdeOscuro, //Fondo verde oscuro
-        elevation: 6, //Sombra suave para dar profundidad
+        automaticallyImplyLeading: false,
+        backgroundColor: verdeOscuro,
+        elevation: 6,
         centerTitle: true,
       ),
-      body: SafeArea( // Evita áreas no seguras de la pantalla
-        child: SingleChildScrollView( // Permite desplazamiento si el contenido es largo
+      body: rol == null 
+      ? const Center(child: CircularProgressIndicator()) 
+      : SafeArea(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Saludo Personalizado ---
+              
               Text(
                 '¡Hola, ${userName ?? 'Usuario'}!',
                 style: const TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: verdeOscuro, //Verde principal para destacar
+                  color: verdeOscuro,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
-                '¿En qué podemos ayudarte?',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey,
-                ),
+              Text(
+                'Rol: $rol 👤',
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
               const SizedBox(height: 28),
 
-              //Tarjeta principal de bienvenida
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -93,23 +92,29 @@ class _HomePageState extends State<HomePage> {
                     const Icon(Icons.health_and_safety, size: 60, color: verdeOscuro),
                     const SizedBox(height: 10),
                     const Text(
-                      'DoctorAppointmentApp de prueba',
+                      'DoctorAppointmentApp',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 20),
 
-                    // --- Botón para ir a la pantalla de citas ---
+                    // 🚀 BOTÓN DINÁMICO SEGÚN ROL
                     ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.pushNamed(context, Routes.citas);
+                        if (rol == "Médico") {
+                          Navigator.pushNamed(context, Routes.dashboard);
+                        } else {
+                          Navigator.pushNamed(context, Routes.citas);
+                        }
                       },
                       icon: const Icon(Icons.calendar_today, color: blanco),
-                      label: const Text(
-                        'Gestionar Citas',
-                        style: TextStyle(fontSize: 18, color: blanco),
+                      label: Text(
+                        rol == "Médico" 
+                          ? 'Ver citas (Médico)' 
+                          : 'Agregar cita',
+                        style: const TextStyle(fontSize: 18, color: blanco),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: verdeOscuro, // verde oscuro principal
+                        backgroundColor: verdeOscuro,
                         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
@@ -123,7 +128,6 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 35),
 
-              // --- Sección de Especialistas ---
               _buildSectionTitle('Especialistas', verdeOscuro),
               SizedBox(
                 height: 130,
@@ -141,7 +145,6 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 35),
 
-              // --- Sección de Doctores Populares ---
               _buildSectionTitle('Doctores Populares', verdeOscuro),
               _buildDoctorCard('Dr. Juan Pérez', 'Cardiólogo', Icons.male, verdeClaro, verdeOscuro),
               _buildDoctorCard('Dra. Ana García', 'Dermatóloga', Icons.female, verdeClaro, verdeOscuro),
@@ -152,8 +155,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  // --- Widgets Reutilizables Mejorados con diseño ---
 
   Widget _buildSectionTitle(String title, Color color) {
     return Padding(
@@ -169,13 +170,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  //Tarjetas horizontales con colores suaves y sombras
-  Widget _buildSpecialistCard(
-    String specialty,
-    IconData icon,
-    Color verdeClaro,
-    Color verdeOscuro,
-  ) {
+  Widget _buildSpecialistCard(String specialty, IconData icon, Color verdeClaro, Color verdeOscuro) {
     return Container(
       width: 120,
       margin: const EdgeInsets.only(right: 12),
@@ -205,16 +200,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Tarjeta de doctor con estilo visual más atractivo
-  Widget _buildDoctorCard(
-    String name,
-    String specialty,
-    IconData icon,
-    Color verdeClaro,
-    Color verdeOscuro,
-  ) {
+  Widget _buildDoctorCard(String name, String specialty, IconData icon, Color verdeClaro, Color verdeOscuro) {
     return Card(
-      color: blanco,
+      color: Colors.white,
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -232,7 +220,6 @@ class _HomePageState extends State<HomePage> {
         ),
         subtitle: Text(specialty),
         trailing: Icon(Icons.arrow_forward_ios, color: verdeOscuro),
-        onTap: () {},
       ),
     );
   }

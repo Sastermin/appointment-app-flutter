@@ -1,27 +1,37 @@
 import 'package:flutter/material.dart';
-import 'profile_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'citas_page.dart';
+import 'dashboard_bloc.dart';
+import 'dashboard_page.dart';
 import 'login_page.dart';
 import 'main_navigator.dart';
-import 'citas_page.dart'; // ¡NUEVA IMPORTACIÓN!
+import 'profile_page.dart';
 
 class Routes {
   static const String login = '/login';
-  // 'home' ahora será el navegador principal con la barra inferior
-  static const String home = '/home'; 
+  static const String home = '/home';
   static const String profile = '/profile';
-  static const String citas = '/citas'; // ¡NUEVA RUTA!
+  static const String citas = '/citas';
+  static const String dashboard = '/dashboard';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case login:
         return MaterialPageRoute(builder: (_) => const LoginPage());
       case home:
-        // La ruta '/home' ahora apunta al MainNavigator
-        return MaterialPageRoute(builder: (_) => const MainNavigator()); 
+        return MaterialPageRoute(builder: (_) => const MainNavigator());
       case profile:
         return MaterialPageRoute(builder: (_) => const ProfilePage());
-      case citas: // ¡NUEVO CASO!
+      case citas:
         return MaterialPageRoute(builder: (_) => const CitasPage());
+      case dashboard:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => DashboardBloc(),
+            child: const DashboardPage(),
+          ),
+        );
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

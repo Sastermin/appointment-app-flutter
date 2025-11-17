@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'routes.dart';
 
 class LoginPage extends StatefulWidget {
@@ -15,30 +16,30 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  // 👇 Nuevo: Campo para selección de rol
+  String? selectedRole;
+
   @override
   Widget build(BuildContext context) {
-    // Colores principales de la app
     const Color verdeClaro = Color(0xFF9FE2BF);
     const Color verdeOscuro = Color(0xFF3E8E41);
     const Color blanco = Colors.white;
 
     return Scaffold(
-      //Fondo en blanco con appbar estilizada
       backgroundColor: blanco,
       appBar: AppBar(
         title: const Text(
           'Inicio de Sesión',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.white, // texto blanco sobre fondo verde
+            color: Colors.white,
           ),
         ),
-        centerTitle: true, // Centra el título
-        backgroundColor: verdeOscuro, // fondo verde oscuro del appbar
-        elevation: 5, // ligera sombra elegante
+        centerTitle: true,
+        backgroundColor: verdeOscuro,
+        elevation: 5,
       ),
 
-      //Centrar el contenido con un diseño más limpio
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
@@ -46,7 +47,6 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Logo o ícono representativo
               const Icon(
                 Icons.local_hospital_rounded,
                 size: 90,
@@ -54,7 +54,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 20),
 
-              // Texto de bienvenida
               const Text(
                 "Bienvenido de nuevo",
                 textAlign: TextAlign.center,
@@ -65,6 +64,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 8),
+
               const Text(
                 "Por favor, inicia sesión para continuar",
                 textAlign: TextAlign.center,
@@ -72,17 +72,16 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 30),
 
-              // Campo de correo electrónico
               TextFormField(
                 controller: emailController,
                 decoration: InputDecoration(
                   labelText: "Correo Electrónico",
                   prefixIcon: const Icon(Icons.email_outlined, color: verdeOscuro),
-                  filled: true, //color de fondo en el campo
+                  filled: true,
                   fillColor: verdeClaro.withOpacity(0.2),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), // bordes redondeados
-                    borderSide: BorderSide.none, // sin borde visible
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
                   ),
                   labelStyle: const TextStyle(color: verdeOscuro),
                 ),
@@ -95,7 +94,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 16),
 
-              // Campo de contraseña
               TextFormField(
                 controller: passwordController,
                 decoration: InputDecoration(
@@ -117,9 +115,39 @@ class _LoginPageState extends State<LoginPage> {
                   return null;
                 },
               ),
+
+              const SizedBox(height: 20),
+
+              // 🔥 Selector de Rol
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Color(0xFF9FE2BF).withOpacity(0.2),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                value: selectedRole,
+                hint: const Text("Selecciona tu rol"),
+                items: const [
+                  DropdownMenuItem(value: "Paciente", child: Text("Paciente")),
+                  DropdownMenuItem(value: "Médico", child: Text("Médico")),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    selectedRole = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null) return "Selecciona un rol";
+                  return null;
+                },
+              ),
+
               const SizedBox(height: 30),
 
-              // Botón de inicio de sesión
+              // 🔥 BOTÓN LOGIN
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
@@ -130,32 +158,35 @@ class _LoginPageState extends State<LoginPage> {
                         password: passwordController.text.trim(),
                       );
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            "Bienvenido ${userCredential.user?.email ?? ''}",
+                      final user = userCredential.user;
+
+                      if (user != null) {
+                        // 👇 Guardar el rol seleccionado en Firestore
+                        await FirebaseFirestore.instance
+                            .collection('usuarios')
+                            .doc(user.uid)
+                            .set({"rol": selectedRole}, SetOptions(merge: true));
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Bienvenido ${user.email} | Rol: $selectedRole"),
                           ),
-                        ),
-                      );
+                        );
 
-                      Navigator.pushReplacementNamed(context, Routes.home);
-                    } on FirebaseAuthException catch (e) {
-                      String message = "";
-                      if (e.code == 'user-not-found') {
-                        message = "Usuario no encontrado";
-                      } else if (e.code == 'wrong-password') {
-                        message = "Contraseña incorrecta";
-                      } else {
-                        message = e.message!;
+                        // 🔥 Navegación automática según el rol
+                        if (selectedRole == "Médico") {
+                          Navigator.pushReplacementNamed(context, Routes.dashboard);
+                        } else {
+                          Navigator.pushReplacementNamed(context, Routes.home);
+                        }
                       }
-
+                    } on FirebaseAuthException catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(message)),
+                        SnackBar(content: Text(e.message ?? "Error al iniciar sesión")),
                       );
                     }
                   }
                 },
-                //Diseño de botón principal
                 style: ElevatedButton.styleFrom(
                   backgroundColor: verdeOscuro,
                   shape: RoundedRectangleBorder(
@@ -172,7 +203,6 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 20),
 
-              //Botones secundarios estilizados
               TextButton(
                 onPressed: () {},
                 child: const Text(
@@ -196,7 +226,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
 
               const SizedBox(height: 10),
-
             ],
           ),
         ),

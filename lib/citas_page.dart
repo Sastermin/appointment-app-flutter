@@ -87,10 +87,12 @@ class _CitasPageState extends State<CitasPage> {
       return;
     }
 
+    final user = FirebaseAuth.instance.currentUser;
     final data = {
       'nombreUsuario': nombreUsuario ?? 'Sin nombre',
       'motivo': motivoController.text.trim(),
       'fechaHora': Timestamp.fromDate(fechaSeleccionada!),
+      'usuarioId': user?.uid,
       'creadoEn': FieldValue.serverTimestamp(),
     };
 

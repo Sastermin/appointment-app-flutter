@@ -20,6 +20,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   bool _loading = false;
 
+  // VARIABLE PARA EL ROL
+  String rolSeleccionado = "Paciente";
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +39,8 @@ class _ProfilePageState extends State<ProfilePage> {
       nombreController.text = data['nombre'] ?? '';
       telefonoController.text = data['telefono'] ?? '';
       enfermedadesController.text = data['enfermedades'] ?? '';
+      rolSeleccionado = data['rol'] ?? "Paciente"; //Recupera rol
+      setState(() {});
     }
   }
 
@@ -51,6 +56,7 @@ class _ProfilePageState extends State<ProfilePage> {
       'enfermedades': enfermedadesController.text.trim(),
       'email': user.email,
       'uid': user.uid,
+      'rol': rolSeleccionado, // Se guarda el rol
     });
 
     setState(() => _loading = false);
@@ -65,25 +71,20 @@ class _ProfilePageState extends State<ProfilePage> {
     final user = _auth.currentUser;
 
     return Scaffold(
-      //AppBar verde con texto blanco y título centrado
       appBar: AppBar(
         title: const Text("Perfil"),
         backgroundColor: const Color(0xFF4CAF50),
         foregroundColor: Colors.white,
         centerTitle: true,
       ),
-
-      //Fondo blanco
       backgroundColor: Colors.white,
-
-      body: _loading //Cargar indicador si está en proceso
+      body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(16.0),
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    //Encabezado con correo del usuario en contenedor verde muy claro
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -93,142 +94,65 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Text(
                         "Correo: ${user?.email ?? 'No disponible'}",
                         style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2E7D32),
-                        ),
+                            fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
                       ),
                     ),
                     const SizedBox(height: 20),
 
-                    // Campo de texto Nombre
                     TextField(
                       controller: nombreController,
-                      decoration: InputDecoration(
-                        labelText: "Nombre completo",
-                        labelStyle: const TextStyle(color: Color(0xFF4CAF50)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF81C784)),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF388E3C)),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
+                      decoration: const InputDecoration(labelText: "Nombre completo"),
                     ),
                     const SizedBox(height: 10),
 
-                    //Campo de texto Teléfono
                     TextField(
                       controller: telefonoController,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: "Teléfono",
-                        labelStyle: const TextStyle(color: Color(0xFF4CAF50)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF81C784)),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF388E3C)),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
+                      decoration: const InputDecoration(labelText: "Teléfono"),
                     ),
                     const SizedBox(height: 10),
 
-                    //Campo de texto Enfermedades
                     TextField(
                       controller: enfermedadesController,
                       maxLines: 3,
+                      decoration: const InputDecoration(labelText: "Enfermedades"),
+                    ),
+                    const SizedBox(height: 10),
+
+                    //NUEVO DROPDOWN
+                    DropdownButtonFormField<String>(
+                      value: rolSeleccionado,
+                      items: const [
+                        DropdownMenuItem(value: "Paciente", child: Text("Paciente")),
+                        DropdownMenuItem(value: "Médico", child: Text("Médico")),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          rolSeleccionado = value!;
+                        });
+                      },
                       decoration: InputDecoration(
-                        labelText: "Enfermedades",
-                        labelStyle: const TextStyle(color: Color(0xFF4CAF50)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF81C784)),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF388E3C)),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        labelText: "Rol",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    ElevatedButton(
+                      onPressed: _saveUserData,
+                      child: const Text("Guardar información"),
                     ),
                     const SizedBox(height: 20),
 
-                    //Botón guardar datos verde con texto blanco y bordes redondeados
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _saveUserData,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4CAF50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: const Text(
-                          "Guardar información",
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                      ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        await _auth.signOut();
+                        if (!mounted) return;
+                        Navigator.pushReplacementNamed(context, Routes.login);
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      child: const Text("Cerrar sesión"),
                     ),
-                    const SizedBox(height: 20),
-
-                    // Botón volver al menú principal
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE8F5E9),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: const BorderSide(color: Color(0xFF4CAF50)),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: const Text(
-                          "Volver al Menú Principal",
-                          style: TextStyle(fontSize: 16, color: Color(0xFF2E7D32)),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    //Botón cerrar sesión rojo con texto blanco
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          await _auth.signOut();
-                          if (!mounted) return;
-                          Navigator.pushReplacementNamed(context, Routes.login);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFD32F2F),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: const Text(
-                          "Cerrar sesión",
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
                   ],
                 ),
               ),

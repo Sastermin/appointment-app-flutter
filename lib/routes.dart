@@ -7,6 +7,7 @@ import 'dashboard_page.dart';
 import 'login_page.dart';
 import 'main_navigator.dart';
 import 'profile_page.dart';
+import 'graphics_page.dart';
 
 class Routes {
   static const String login = '/login';
@@ -14,6 +15,7 @@ class Routes {
   static const String profile = '/profile';
   static const String citas = '/citas';
   static const String dashboard = '/dashboard';
+  static const String graphics = '/graphics'; 
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -32,6 +34,10 @@ class Routes {
             child: const DashboardPage(),
           ),
         );
+
+      case graphics: 
+        return MaterialPageRoute(builder: (_) => GraphicsPage());
+
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

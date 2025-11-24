@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_page.dart';
 import 'messages_page.dart';
 import 'settings_page.dart';
+import 'graphics_page.dart';
 
 class MainNavigator extends StatefulWidget {
   const MainNavigator({super.key});
@@ -13,10 +14,10 @@ class MainNavigator extends StatefulWidget {
 class _MainNavigatorState extends State<MainNavigator> {
   int _selectedIndex = 0;
 
-  // Lista de las páginas que se mostrarán
-  static const List<Widget> _widgetOptions = <Widget>[
+  static List<Widget> _widgetOptions = <Widget>[
     HomePage(),
     MessagesPage(),
+    GraphicsPage(),
     SettingsPage(),
   ];
 
@@ -34,18 +35,10 @@ class _MainNavigatorState extends State<MainNavigator> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Inicio',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.message),
-            label: 'Mensajes',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Configuración',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
+          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Gráficas'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Configuración'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,

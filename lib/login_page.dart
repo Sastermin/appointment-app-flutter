@@ -16,7 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // 👇 Nuevo: Campo para selección de rol
+  // Campo para selección de rol
   String? selectedRole;
 
   @override
@@ -118,7 +118,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 20),
 
-              // 🔥 Selector de Rol
+              // Selector de Rol
               DropdownButtonFormField<String>(
                 decoration: InputDecoration(
                   filled: true,
@@ -147,7 +147,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 30),
 
-              // 🔥 BOTÓN LOGIN
+              //BOTÓN LOGIN
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
@@ -161,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
                       final user = userCredential.user;
 
                       if (user != null) {
-                        // 👇 Guardar el rol seleccionado en Firestore
+                        // Guardar el rol seleccionado en Firestore
                         await FirebaseFirestore.instance
                             .collection('usuarios')
                             .doc(user.uid)

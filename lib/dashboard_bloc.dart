@@ -31,9 +31,10 @@ class DashboardBloc extends Cubit<DashboardState> {
 
       for (final doc in citasSnapshot.docs) {
         final data = doc.data();
-        final pacienteId = data['usuarioId'] ?? data['pacienteId'];
-        if (pacienteId != null) {
-          pacientes.add(pacienteId.toString());
+        // Campo unificado: solo usamos 'usuarioId'
+        final usuarioId = data['usuarioId'];
+        if (usuarioId != null) {
+          pacientes.add(usuarioId.toString());
         }
       }
 

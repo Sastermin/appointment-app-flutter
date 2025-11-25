@@ -14,6 +14,7 @@ class _CitasPageState extends State<CitasPage> {
   final TextEditingController motivoController = TextEditingController();
 
   String? nombreUsuario;
+  String? rolUsuario;
   DateTime? fechaSeleccionada;
   String? citaEnEdicion;
 
@@ -30,9 +31,30 @@ class _CitasPageState extends State<CitasPage> {
       if (doc.exists && doc.data() != null) {
         setState(() {
           nombreUsuario = doc.data()!['nombre'] ?? 'Usuario sin nombre';
+          rolUsuario = doc.data()!['rol'] ?? 'Paciente';
         });
       }
     }
+  }
+
+  // Obtener stream de citas filtrado según el rol del usuario
+  Stream<QuerySnapshot> _getCitasStream() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    // Si el usuario es Médico, mostrar todas las citas
+    if (rolUsuario == 'Médico') {
+      return firestore
+          .collection('citas')
+          .orderBy('fechaHora', descending: false)
+          .snapshots();
+    }
+
+    // Si es Paciente, mostrar solo sus propias citas
+    return firestore
+        .collection('citas')
+        .where('usuarioId', isEqualTo: user?.uid)
+        .orderBy('fechaHora', descending: false)
+        .snapshots();
   }
 
   Future<void> seleccionarFechaYHora() async {
@@ -81,6 +103,7 @@ class _CitasPageState extends State<CitasPage> {
 
   Future<void> guardarCita() async {
     if (motivoController.text.isEmpty || fechaSeleccionada == null) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Completa todos los campos')),
       );
@@ -98,10 +121,12 @@ class _CitasPageState extends State<CitasPage> {
 
     if (citaEnEdicion == null) {
       await firestore.collection('citas').add(data);
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Cita creada')));
     } else {
       await firestore.collection('citas').doc(citaEnEdicion).update(data);
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Cita actualizada')));
     }
@@ -115,6 +140,7 @@ class _CitasPageState extends State<CitasPage> {
 
   Future<void> eliminarCita(String id) async {
     await firestore.collection('citas').doc(id).delete();
+    if (!mounted) return;
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('Cita eliminada')));
   }
@@ -134,21 +160,21 @@ class _CitasPageState extends State<CitasPage> {
     await Future.delayed(const Duration(milliseconds: 800));
 
     // SNACKBAR DE CONFIRMACIÓN VISUAL
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: const [
-              Icon(Icons.refresh, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Lista de citas actualizada correctamente'),
-            ],
-          ),
-          backgroundColor: const Color(0xFF4CAF50),
-          duration: const Duration(seconds: 2),
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: const [
+            Icon(Icons.refresh, color: Colors.white),
+            SizedBox(width: 8),
+            Text('Lista de citas actualizada correctamente'),
+          ],
         ),
-      );
-    }
+        backgroundColor: const Color(0xFF4CAF50),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -250,10 +276,7 @@ class _CitasPageState extends State<CitasPage> {
                 onRefresh: _refrescarCitas,
                 color: const Color(0xFF4CAF50),
                 child: StreamBuilder<QuerySnapshot>(
-                  stream: firestore
-                      .collection('citas')
-                      .orderBy('fechaHora', descending: false)
-                      .snapshots(),
+                  stream: _getCitasStream(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());

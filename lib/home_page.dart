@@ -56,6 +56,18 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: verdeOscuro,
         elevation: 6,
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: blanco),
+            onPressed: () async {
+              await _auth.signOut();
+              if (mounted) {
+                Navigator.pushReplacementNamed(context, Routes.login);
+              }
+            },
+            tooltip: 'Cerrar sesión',
+          ),
+        ],
       ),
       body: rol == null 
       ? const Center(child: CircularProgressIndicator()) 

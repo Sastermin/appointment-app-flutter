@@ -15,9 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  // Campo para selección de rol
-  String? selectedRole;
+  String selectedRole = 'Paciente'; // Rol por defecto
 
   @override
   Widget build(BuildContext context) {
@@ -118,31 +116,40 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 20),
 
-              // Selector de Rol
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Color(0xFF9FE2BF).withOpacity(0.2),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
+              // Selector de rol
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                decoration: BoxDecoration(
+                  color: verdeClaro.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(15),
                 ),
-                value: selectedRole,
-                hint: const Text("Selecciona tu rol"),
-                items: const [
-                  DropdownMenuItem(value: "Paciente", child: Text("Paciente")),
-                  DropdownMenuItem(value: "Médico", child: Text("Médico")),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    selectedRole = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) return "Selecciona un rol";
-                  return null;
-                },
+                child: DropdownButtonFormField<String>(
+                  value: selectedRole,
+                  decoration: const InputDecoration(
+                    labelText: "Selecciona tu rol",
+                    prefixIcon: Icon(Icons.person_outline, color: verdeOscuro),
+                    border: InputBorder.none,
+                    labelStyle: TextStyle(color: verdeOscuro),
+                  ),
+                  dropdownColor: Colors.white,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Paciente',
+                      child: Text('Paciente'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Médico',
+                      child: Text('Médico'),
+                    ),
+                  ],
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        selectedRole = newValue;
+                      });
+                    }
+                  },
+                ),
               ),
 
               const SizedBox(height: 30),
@@ -160,12 +167,17 @@ class _LoginPageState extends State<LoginPage> {
 
                       final user = userCredential.user;
 
-                      if (user != null) {
-                        // Guardar el rol seleccionado en Firestore
+                      if (user != null && mounted) {
+                        // Guardar o actualizar el rol seleccionado en Firestore
                         await FirebaseFirestore.instance
                             .collection('usuarios')
                             .doc(user.uid)
-                            .set({"rol": selectedRole}, SetOptions(merge: true));
+                            .set({
+                          'rol': selectedRole,
+                          'email': user.email,
+                        }, SetOptions(merge: true));
+
+                        if (!mounted) return;
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -173,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         );
 
-                        // 🔥 Navegación automática según el rol
+                        // Navegación automática según el rol seleccionado
                         if (selectedRole == "Médico") {
                           Navigator.pushReplacementNamed(context, Routes.dashboard);
                         } else {

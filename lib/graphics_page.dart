@@ -11,31 +11,38 @@ class _GraphicsPageState extends State<GraphicsPage> {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   Future<Map<String, int>> getAppointmentsPerMonth() async {
-    final snapshot = await _db.collection('appointments').get();
+    final snapshot = await _db.collection('citas').get();
 
     Map<String, int> monthCount = {};
 
     for (var doc in snapshot.docs) {
-      DateTime date = (doc['date'] as Timestamp).toDate();
-      String month = "${date.month}-${date.year}";
+      final data = doc.data() as Map<String, dynamic>;
+      if (data['fechaHora'] != null) {
+        DateTime date = (data['fechaHora'] as Timestamp).toDate();
+        String month = "${date.month}-${date.year}";
 
-      monthCount.update(month, (value) => value + 1, ifAbsent: () => 1);
+        monthCount.update(month, (value) => value + 1, ifAbsent: () => 1);
+      }
     }
 
     return monthCount;
   }
 
   Future<Map<String, int>> getStatusCount() async {
-    final snapshot = await _db.collection('appointments').get();
+    final snapshot = await _db.collection('citas').get();
 
     int completed = 0;
     int cancelled = 0;
 
     for (var doc in snapshot.docs) {
-      if (doc['status'] == "completed") completed++;
-      if (doc['status'] == "cancelled") cancelled++;
+      final data = doc.data() as Map<String, dynamic>;
+      // NOTA: El modelo actual de 'citas' no tiene campo 'status'
+      // Estas líneas están comentadas hasta que se agregue el campo
+      // if (data['status'] == "completed") completed++;
+      // if (data['status'] == "cancelled") cancelled++;
     }
 
+    // Por ahora retorna 0 hasta que se implemente el campo status
     return {
       "Completadas": completed,
       "Canceladas": cancelled,

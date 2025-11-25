@@ -185,12 +185,8 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         );
 
-                        // Navegación automática según el rol seleccionado
-                        if (selectedRole == "Médico") {
-                          Navigator.pushReplacementNamed(context, Routes.dashboard);
-                        } else {
-                          Navigator.pushReplacementNamed(context, Routes.home);
-                        }
+                        // Navegación automática al home para todos los usuarios
+                        Navigator.pushReplacementNamed(context, Routes.home);
                       }
                     } on FirebaseAuthException catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(

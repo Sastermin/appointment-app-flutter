@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'routes.dart';
 
@@ -46,47 +45,18 @@ class AuthStateHandler extends StatelessWidget {
           );
         }
 
-        // Si el usuario está autenticado
+        // Si el usuario está autenticado, redirigir al home
         if (snapshot.hasData && snapshot.data != null) {
-          return FutureBuilder<DocumentSnapshot>(
-            future: FirebaseFirestore.instance
-                .collection('usuarios')
-                .doc(snapshot.data!.uid)
-                .get(),
-            builder: (context, userSnapshot) {
-              if (userSnapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF4CAF50),
-                    ),
-                  ),
-                );
-              }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushReplacementNamed(context, Routes.home);
+          });
 
-              // Leer el rol del usuario
-              final String userRole =
-                  userSnapshot.data?.data() != null
-                      ? (userSnapshot.data!.data() as Map<String, dynamic>)['rol'] ?? 'Paciente'
-                      : 'Paciente';
-
-              // Redirigir según el rol
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (userRole == 'Médico') {
-                  Navigator.pushReplacementNamed(context, Routes.dashboard);
-                } else {
-                  Navigator.pushReplacementNamed(context, Routes.home);
-                }
-              });
-
-              return const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFF4CAF50),
-                  ),
-                ),
-              );
-            },
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF4CAF50),
+              ),
+            ),
           );
         }
 

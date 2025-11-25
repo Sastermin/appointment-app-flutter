@@ -20,7 +20,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   bool _loading = false;
 
-  // VARIABLE PARA EL ROL
+  // VARIABLE PARA EL ROL (solo para mostrar)
   String rolSeleccionado = "Paciente";
 
   @override
@@ -39,7 +39,7 @@ class _ProfilePageState extends State<ProfilePage> {
       nombreController.text = data['nombre'] ?? '';
       telefonoController.text = data['telefono'] ?? '';
       enfermedadesController.text = data['enfermedades'] ?? '';
-      rolSeleccionado = data['rol'] ?? "Paciente"; //Recupera rol
+      rolSeleccionado = data['rol'] ?? "Paciente";
       setState(() {});
     }
   }
@@ -56,7 +56,7 @@ class _ProfilePageState extends State<ProfilePage> {
       'enfermedades': enfermedadesController.text.trim(),
       'email': user.email,
       'uid': user.uid,
-      'rol': rolSeleccionado, // Se guarda el rol
+      'rol': rolSeleccionado, // Se mantiene sin poder editar
     });
 
     setState(() => _loading = false);
@@ -94,7 +94,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Text(
                         "Correo: ${user?.email ?? 'No disponible'}",
                         style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2E7D32),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -116,23 +119,22 @@ class _ProfilePageState extends State<ProfilePage> {
                       maxLines: 3,
                       decoration: const InputDecoration(labelText: "Enfermedades"),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
 
-                    //NUEVO DROPDOWN
-                    DropdownButtonFormField<String>(
-                      value: rolSeleccionado,
-                      items: const [
-                        DropdownMenuItem(value: "Paciente", child: Text("Paciente")),
-                        DropdownMenuItem(value: "Médico", child: Text("Médico")),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          rolSeleccionado = value!;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        labelText: "Rol",
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    // Mostrar rol sin permitir editar
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE3F2FD),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        "Rol asignado: $rolSeleccionado",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueAccent,
+                        ),
                       ),
                     ),
 

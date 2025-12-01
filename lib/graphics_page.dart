@@ -28,26 +28,6 @@ class _GraphicsPageState extends State<GraphicsPage> {
     return monthCount;
   }
 
-  Future<Map<String, int>> getStatusCount() async {
-    final snapshot = await _db.collection('citas').get();
-
-    int completed = 0;
-    int cancelled = 0;
-
-    for (var doc in snapshot.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      // NOTA: El modelo actual de 'citas' no tiene campo 'status'
-      // Estas líneas están comentadas hasta que se agregue el campo
-      // if (data['status'] == "completed") completed++;
-      // if (data['status'] == "cancelled") cancelled++;
-    }
-
-    // Por ahora retorna 0 hasta que se implemente el campo status
-    return {
-      "Completadas": completed,
-      "Canceladas": cancelled,
-    };
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,40 +76,6 @@ class _GraphicsPageState extends State<GraphicsPage> {
               },
             ),
 
-            SizedBox(height: 50),
-
-            // -------- PIE CHART --------
-            Text("Citas Completadas vs Canceladas", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 20),
-
-            FutureBuilder<Map<String, int>>(
-              future: getStatusCount(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-
-                final data = snapshot.data!;
-                final keys = data.keys.toList();
-                final values = data.values.toList();
-
-                return Container(
-                  height: 250,
-                  child: PieChart(
-                    PieChartData(
-                      sectionsSpace: 4,
-                      centerSpaceRadius: 40,
-                      sections: List.generate(data.length, (index) {
-                        return PieChartSectionData(
-                          value: values[index].toDouble(),
-                          title: "${keys[index]} (${values[index]})",
-                          radius: 60,
-                          color: index == 0 ? Colors.green : Colors.red,
-                        );
-                      }),
-                    ),
-                  ),
-                );
-              },
-            ),
           ],
         ),
       ),

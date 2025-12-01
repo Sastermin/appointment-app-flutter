@@ -48,12 +48,10 @@ class _CitasPageState extends State<CitasPage> {
           .orderBy('fechaHora', descending: false)
           .snapshots();
     }
-
-    // Si es Paciente, mostrar solo sus propias citas
+    // Si el usuario es Paciente, mostrar solo sus citas
     return firestore
         .collection('citas')
         .where('usuarioId', isEqualTo: user?.uid)
-        .orderBy('fechaHora', descending: false)
         .snapshots();
   }
 
@@ -111,31 +109,46 @@ class _CitasPageState extends State<CitasPage> {
     }
 
     final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: Usuario no autenticado')),
+      );
+      return;
+    }
+
     final data = {
       'nombreUsuario': nombreUsuario ?? 'Sin nombre',
       'motivo': motivoController.text.trim(),
       'fechaHora': Timestamp.fromDate(fechaSeleccionada!),
-      'usuarioId': user?.uid,
+      'usuarioId': user.uid,
       'creadoEn': FieldValue.serverTimestamp(),
     };
 
-    if (citaEnEdicion == null) {
-      await firestore.collection('citas').add(data);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Cita creada')));
-    } else {
-      await firestore.collection('citas').doc(citaEnEdicion).update(data);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Cita actualizada')));
-    }
+    try {
+      if (citaEnEdicion == null) {
+        await firestore.collection('citas').add(data);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Cita creada')));
+      } else {
+        await firestore.collection('citas').doc(citaEnEdicion).update(data);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Cita actualizada')));
+      }
 
-    motivoController.clear();
-    setState(() {
-      fechaSeleccionada = null;
-      citaEnEdicion = null;
-    });
+      motivoController.clear();
+      setState(() {
+        fechaSeleccionada = null;
+        citaEnEdicion = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al guardar cita: $e')),
+      );
+    }
   }
 
   Future<void> eliminarCita(String id) async {
@@ -282,7 +295,16 @@ class _CitasPageState extends State<CitasPage> {
                       return const Center(child: CircularProgressIndicator());
                     }
 
-                    final citas = snapshot.data!.docs;
+                    // Obtener las citas y ordenarlas localmente por fechaHora
+                    final citas = snapshot.data!.docs.toList();
+                    citas.sort((a, b) {
+                      final fechaA = (a.data() as Map<String, dynamic>)['fechaHora'] as Timestamp?;
+                      final fechaB = (b.data() as Map<String, dynamic>)['fechaHora'] as Timestamp?;
+                      if (fechaA == null && fechaB == null) return 0;
+                      if (fechaA == null) return 1;
+                      if (fechaB == null) return -1;
+                      return fechaA.compareTo(fechaB);
+                    });
 
                     if (citas.isEmpty) {
                       return const Center(

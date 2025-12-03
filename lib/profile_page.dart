@@ -50,13 +50,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() => _loading = true);
 
-    await _firestore.collection('usuarios').doc(user.uid).set({
+    await _firestore.collection('usuarios').doc(user.uid).update({
       'nombre': nombreController.text.trim(),
       'telefono': telefonoController.text.trim(),
       'enfermedades': enfermedadesController.text.trim(),
-      'email': user.email,
-      'uid': user.uid,
-      'rol': rolSeleccionado, // Se mantiene sin poder editar
     });
 
     setState(() => _loading = false);
